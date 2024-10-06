@@ -19,13 +19,33 @@ repositories {
 
 extra["springCloudVersion"] = "2023.0.3"
 
-dependencies {
+
+//spring
+dependencies{
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
+}
+
+//other
+dependencies {
+    implementation("org.postgresql:postgresql:42.1.4")
+
+
+    implementation("com.ibm.icu:icu4j:75.1")
+
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
+
+//lombok
+dependencies{
+    compileOnly("org.projectlombok:lombok:1.18.34")
+    annotationProcessor("org.projectlombok:lombok:1.18.34")
+
+    testCompileOnly("org.projectlombok:lombok:1.18.34")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.34")
+}
+
+
 
 dependencyManagement {
     imports {
