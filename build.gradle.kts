@@ -30,7 +30,6 @@ dependencies{
 dependencies {
     implementation("org.postgresql:postgresql:42.1.4")
 
-
     implementation("com.ibm.icu:icu4j:75.1")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
