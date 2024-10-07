@@ -1,23 +1,28 @@
 Project
--id (long)
--name (string)
--createAt (time)
--taskStates (TaskState[] array)
+- id (long)
+- name (string)
+- createAt (time)
+- taskStates (TaskState[] array)
 
 TaskState
--id (long)
--name (string)
--ordinal (long)
--createdAt (time)
--tasks (Task[] array)
+- id (long)
+- name (string)
+- ordinal (long)
+- createdAt (time)
+- tasks (Task[] array)
 
 Task
--id (long)
--name (string)
--description (string)
--createdAt (time)
+- id (long)
+- name (string)
+- description (string)
+- createdAt (time)
 
 
--DB Entities
--DB Entity Managment
--REST API
+DB Entities  
+DB Entity Managment   
+REST API 
+
+ProjectController
+- Создать проекты
+- Редактировать проект
+- Удалять проект
