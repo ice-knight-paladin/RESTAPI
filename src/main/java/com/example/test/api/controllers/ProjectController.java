@@ -1,5 +1,6 @@
 package com.example.test.api.controllers;
 
+import com.example.test.api.controllers.helpers.ControllerHelper;
 import com.example.test.api.dto.AskDto;
 import com.example.test.api.dto.ProjectDto;
 import com.example.test.api.exceptions.NotFoundException;
@@ -28,19 +29,17 @@ public class ProjectController {
 
     ProjectDtoFactory projectDtoFactory;
     ProjectRepository projectRepository;
+    ControllerHelper controllerHelper;
 
 
     public static final String FETCH_PROJECTS = "/api/projects";
-
     public static final String DELETE_PROJECT = "/api/projects/{project_id}";
-
-
     public static final String CREATE_OR_UPDATE_PROJECT = "/api/projects";
 
     @DeleteMapping(DELETE_PROJECT)
     public AskDto deleteProject(@PathVariable("project_id") Long projectId) {
 
-        getProjectOrThrowException(projectId);
+        controllerHelper.getProjectOrThrowException(projectId);
 
         projectRepository.deleteById(projectId);
 
@@ -52,19 +51,14 @@ public class ProjectController {
 
         optionalPrefixName = optionalPrefixName.filter(prefixName -> !prefixName.trim().isEmpty());
 
-        Stream<ProjectEntity> projectStream = optionalPrefixName
-                .map(projectRepository::streamAllByNameStartsWithIgnoreCase)
-                .orElseGet(projectRepository::streamAllBy);
+        Stream<ProjectEntity> projectStream = optionalPrefixName.map(projectRepository::streamAllByNameStartsWithIgnoreCase).orElseGet(projectRepository::streamAllBy);
 
 
-        return projectStream.map(projectDtoFactory::makeProjectDto)
-                .collect(Collectors.toList());
+        return projectStream.map(projectDtoFactory::makeProjectDto).collect(Collectors.toList());
     }
 
     @PutMapping(CREATE_OR_UPDATE_PROJECT)
-    public ProjectDto createOrUpdateProject(
-            @RequestParam(value = "project_id", required = false) Optional<Long> optionalProjectId,
-            @RequestParam(value = "project_name", required = false) Optional<String> optionalProjectName) {
+    public ProjectDto createOrUpdateProject(@RequestParam(value = "project_id", required = false) Optional<Long> optionalProjectId, @RequestParam(value = "project_name", required = false) Optional<String> optionalProjectName) {
 
         optionalProjectName = optionalProjectName.filter(projectName -> !projectName.trim().isEmpty());
 
@@ -74,36 +68,22 @@ public class ProjectController {
             throw new BadRequestException("Project name cant be empty.");
         }
 
-        final ProjectEntity project = optionalProjectId
-                .map(this::getProjectOrThrowException)
-                .orElseGet(() -> ProjectEntity.builder().build());
+        final ProjectEntity project = optionalProjectId.map(controllerHelper::getProjectOrThrowException).orElseGet(() -> ProjectEntity.builder().build());
 
 
+        optionalProjectName.ifPresent(projectName -> {
 
-        optionalProjectName
-                .ifPresent(projectName -> {
+            projectRepository.findByName(projectName).filter(anotherProject -> !Objects.equals(anotherProject.getId(), project.getId())).ifPresent(anotherProject -> {
+                throw new BadRequestException(String.format("Project \"%s\" already exists.", projectName));
+            });
 
-                    projectRepository
-                            .findByName(projectName)
-                            .filter(anotherProject -> !Objects.equals(anotherProject.getId(), project.getId()))
-                            .ifPresent(anotherProject -> {
-                                throw new BadRequestException(String.format("Project \"%s\" already exists.", projectName));
-                            });
+            project.setName(projectName);
 
-                    project.setName(projectName);
-
-                });
+        });
 
         final ProjectEntity saveProject = projectRepository.saveAndFlush(project);
 
         return projectDtoFactory.makeProjectDto(saveProject);
-    }
-
-
-    private ProjectEntity getProjectOrThrowException(Long projectId) {
-        return projectRepository
-                .findById(projectId)
-                .orElseThrow(() -> new NotFoundException(String.format("Project with \"%s\" doesnt exists.", projectId)));
     }
 
 

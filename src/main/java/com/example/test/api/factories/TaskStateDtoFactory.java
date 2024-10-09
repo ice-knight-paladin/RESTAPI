@@ -9,15 +9,29 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
+import java.util.stream.Collectors;
+
+@RequiredArgsConstructor
 @Component
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class TaskStateDtoFactory {
+
+    TaskDtoFactory taskDtoFactory;
 
     public TaskStateDto makeProjectDto(TaskStateEntity entity) {
         return TaskStateDto.builder()
                 .id(entity.getId())
                 .name(entity.getName())
                 .createAt(entity.getCreateAt())
-                .ordinal(entity.getOrdinal())
+                .leftTaskStateId(entity.getLeftTaskState().map(TaskStateEntity::getId).orElse(null))
+                .rightTaskStateId(entity.getRightTaskState().map(TaskStateEntity::getId).orElse(null))
+                .tasks(
+                        entity
+                                .getTasks()
+                                .stream()
+                                .map(taskDtoFactory::makeProjectDto)
+                                .collect(Collectors.toList())
+                )
                 .build();
     }
 }
