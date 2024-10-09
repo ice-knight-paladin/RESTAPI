@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface TaskStateRepository extends JpaRepository<TaskStateEntity, Long> {
 
-    Optional<TaskStateEntity> findTaskStateEntityByRightTaskStateIdIsNullAndProjectId(Long projectId);
+    Optional<TaskStateEntity> findTaskStateEntityByProjectIdAndNameContainingIgnoreCase(Long projectId, String taskStateName);
 }
