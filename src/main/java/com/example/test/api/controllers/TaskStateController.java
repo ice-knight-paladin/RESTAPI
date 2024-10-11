@@ -2,6 +2,7 @@ package com.example.test.api.controllers;
 
 
 import com.example.test.api.controllers.helpers.ControllerHelper;
+import com.example.test.api.dto.AskDto;
 import com.example.test.api.dto.TaskStateDto;
 import com.example.test.api.exceptions.BadRequestException;
 import com.example.test.api.exceptions.NotFoundException;
@@ -36,6 +37,7 @@ public class TaskStateController {
     public static final String CREATE_TASK_STATE = "/api/projects/{project_id}/task-states";
     public static final String UPDATE_TASK_STATE = "/api/task-states/{task_state_id}";
     public static final String CHANGE_TASK_STATE_POSITION = "/api/task-states/{task_state_id}/position/change";
+    public static final String DELETE_TASK_STATE = "/api/task-states/{task_state_id}";
 
     @GetMapping(GET_TASK_STATES)
     public List<TaskStateDto> getTaskStates(@PathVariable(name = "project_id") Long projectId) {
@@ -49,7 +51,7 @@ public class TaskStateController {
     public TaskStateDto createTaskState(@PathVariable(name = "project_id") Long projectId, @RequestParam(name = "task_state_name") String taskStateName) {
 
         if (taskStateName.isBlank()) {
-            throw new BadRequestException("Task sate name cant be empty");
+            throw new BadRequestException("Task state name cant be empty");
         }
 
         ProjectEntity project = controllerHelper.getProjectOrThrowException(projectId);
@@ -66,7 +68,6 @@ public class TaskStateController {
                 break;
             }
         }
-
 
         TaskStateEntity taskState = taskStateRepository.saveAndFlush(TaskStateEntity.builder().name(taskStateName).project(project).build());
 
@@ -197,6 +198,40 @@ public class TaskStateController {
                 .ifPresent(taskStateRepository::saveAndFlush);
 
         return taskStateDtoFactory.makeProjectDto(changeTaskState);
+
+    }
+
+    @DeleteMapping(DELETE_TASK_STATE)
+    public AskDto deleteTaskState(@PathVariable(name = "task_state_id") Long taskSateId) {
+
+        TaskStateEntity changeTaskState = getTaskStateOrThrowException(taskSateId);
+
+        Optional<TaskStateEntity> optionalOldLeftTaskState = changeTaskState.getLeftTaskState();
+        Optional<TaskStateEntity> optionalOldRightTaskState = changeTaskState.getRightTaskState();
+
+        changeTaskState.setLeftTaskState(null);
+        changeTaskState.setRightTaskState(null);
+
+        optionalOldLeftTaskState
+                .ifPresent(it -> {
+                    it.setRightTaskState(optionalOldRightTaskState.orElse(null));
+
+                    taskStateRepository.saveAndFlush(it);
+                });
+
+        optionalOldRightTaskState.ifPresent(it -> {
+            it.setLeftTaskState(optionalOldLeftTaskState.orElse(null));
+
+            taskStateRepository.saveAndFlush(it);
+        });
+
+
+
+        changeTaskState = taskStateRepository.saveAndFlush(changeTaskState);
+
+        taskStateRepository.delete(changeTaskState);
+
+        return AskDto.builder().answer(true).build();
 
     }
 
