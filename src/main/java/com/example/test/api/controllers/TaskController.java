@@ -1,9 +1,11 @@
 package com.example.test.api.controllers;
 
 import com.example.test.api.controllers.helpers.ControllerHelper;
+import com.example.test.api.dto.AskDto;
 import com.example.test.api.dto.TaskDto;
 import com.example.test.api.dto.TaskStateDto;
 import com.example.test.api.exceptions.BadRequestException;
+import com.example.test.api.exceptions.NotFoundException;
 import com.example.test.api.factories.TaskDtoFactory;
 import com.example.test.store.entities.ProjectEntity;
 import com.example.test.store.entities.TaskEntity;
@@ -36,6 +38,8 @@ public class TaskController {
     public static final String GET_TASKS = "/api/task-states/{task_state_id}/tasks";
 
     public static final String CREATE_TASK = "/api/task-states/{task_state_id}/tasks";
+
+    public static final String DELETE_TASK = "/api/task-states/{task_state_id}/tasks/{task_id}";
 
     @GetMapping(GET_TASKS)
     public List<TaskDto> getTasks(@PathVariable(name = "task_state_id") Long taskStateId) {
@@ -72,4 +76,27 @@ public class TaskController {
         taskStateRepository.saveAndFlush(taskState);
         return taskDtoFactory.makeProjectDto(taskEntity);
     }
+
+    @DeleteMapping(DELETE_TASK)
+    public AskDto deleteTask(@PathVariable(name = "task_state_id") Long taskStateId,
+                             @PathVariable(name = "task_id") Long taskId) {
+
+        TaskEntity changeTask = taskRepository
+                .findById(taskId)
+                .orElseThrow(() ->
+                        new NotFoundException(String.format("Task with %s id doesnt exists", taskId))
+                );
+
+        TaskStateEntity taskState = controllerHelper.getTaskStateEntityOrThrow(taskStateId);
+        taskState
+                .getTasks()
+                .remove(changeTask);
+
+        taskStateRepository.saveAndFlush(taskState);
+        taskRepository.delete(changeTask);
+
+
+        return AskDto.builder().answer(true).build();
+    }
 }
+
