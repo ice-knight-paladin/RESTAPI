@@ -4,12 +4,16 @@
 
   spring:
     datasource:
-      url: jdbc:postgresql://localhost/crazy-task-tracker
+      url: jdbc:postgresql://postgres/crazy-task-tracker
       username: postgres
       password: postgres
-      driver-class-name: org.postgresql.Driver
 
     jpa:
       hibernate:
         ddl-auto: update
+
       show-sql: true
+
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQL.dialect
